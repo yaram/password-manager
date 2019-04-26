@@ -9,7 +9,14 @@
     align-items: stretch;
 }
 
-#App > #newLogin {
-    margin: 4px;
+#App > input {
     align-self: center;
+}
+
+#App > * {
+    margin: 4px;
+}
+
+#App > #password {
+    width: 250px;
 }
