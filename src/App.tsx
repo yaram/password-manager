@@ -48,7 +48,7 @@ class App extends Component<{}, {
             error: ''
         });
 
-        if(this.state.password.length == 0) {
+        if(this.state.password.length === 0) {
             this.setState({
                 error: 'Please enter a password'
             });
