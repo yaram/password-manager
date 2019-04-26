@@ -112,6 +112,16 @@ class App extends Component<{}, {
         }, () => this.persistLogins());
     }
 
+    deleteLogin(id: string) {
+        const logins = { ...this.state.logins };
+
+        delete logins[id];
+
+        this.setState({
+            logins
+        });
+    }
+
     addNewLogin() {
         const id = this.state.nextLoginID.toString();
 
@@ -156,7 +166,7 @@ class App extends Component<{}, {
             </>;
         } else if(this.state.state === 'logins') {
             const logins = Object.entries(this.state.logins).map(([id, info]) => 
-                <LoginDisplay key={id} info={info} onChange={(info) => this.updateLogin(id, info)} />
+                <LoginDisplay key={id} info={info} onChange={(info) => this.updateLogin(id, info)} onDelete={() => this.deleteLogin(id)} />
             );
 
             content = <>

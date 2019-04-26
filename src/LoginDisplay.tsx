@@ -4,7 +4,8 @@ import { LoginInfo } from './App';
 
 interface LoginDisplayProperties {
     info: LoginInfo
-    onChange: (info: LoginInfo) => void
+    onChange: (info: LoginInfo) => void,
+    onDelete: () => void
 }
 
 class LoginDisplay extends Component<
@@ -57,6 +58,10 @@ class LoginDisplay extends Component<
         this.props.onChange(this.state.currentInfo);
     }
 
+    delete() {
+        this.props.onDelete();
+    }
+
     render() {
         let passwordInputType;
         let visibilityButtonText;
@@ -74,6 +79,7 @@ class LoginDisplay extends Component<
             <input type='text' value={this.state.currentInfo.username} placeholder='username' onChange={(e) => this.updateUsername(e)} onBlur={() => this.loginChanged()} />
             <input type={passwordInputType} value={this.state.currentInfo.password} placeholder='password' onChange={(e) => this.updatePassword(e)} onBlur={() => this.loginChanged()} />
             <input type='button' onClick={() => this.togglePasswordVisibility()} value={visibilityButtonText} />
+            <input type='button' onClick={() => this.delete()} value='Delete' />
         </div>;
     }
 }
