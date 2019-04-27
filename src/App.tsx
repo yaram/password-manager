@@ -33,7 +33,8 @@ class App extends Component<{}, {
     feedKeyPair: ec.KeyPair | null,
     message: string | null,
     logins: { [id: string]: LoginInfo },
-    nextLoginID: number
+    nextLoginID: number,
+    persisting: boolean
 }> {
     constructor(props: {}) {
         super(props);
@@ -46,7 +47,8 @@ class App extends Component<{}, {
             feedKeyPair: null,
             message: null,
             logins: {},
-            nextLoginID: 0
+            nextLoginID: 0,
+            persisting: false
         };
     }
 
@@ -206,8 +208,13 @@ class App extends Component<{}, {
     }
 
     async persistLogins() {
+        if(this.state.persisting) {
+            return;
+        }
+
         this.setState({
-            message: 'Saving...'
+            message: 'Saving...',
+            persisting: true
         });
 
         const info: PersistedInfo = {
@@ -292,7 +299,8 @@ class App extends Component<{}, {
 
             if(feedPostResponse.ok) {
                 this.setState({
-                    message: null
+                    message: null,
+                    persisting: false
                 });
 
                 return;
