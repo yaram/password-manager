@@ -1,4 +1,4 @@
-import React, { Component, ChangeEvent } from 'react';
+import React, { Component, ChangeEvent, KeyboardEvent } from 'react';
 import './LoginDisplay.css';
 import { LoginInfo } from './App';
 
@@ -62,6 +62,12 @@ class LoginDisplay extends Component<
         this.props.onDelete();
     }
 
+    keyDown(e: KeyboardEvent<HTMLInputElement>) {
+        if(e.keyCode === 13) {
+            (e.target as HTMLInputElement).blur();
+        }
+    }
+
     render() {
         let passwordInputType;
         let visibilityButtonText;
@@ -75,9 +81,9 @@ class LoginDisplay extends Component<
         }
 
         return <div className='LoginDisplay'>
-            <input type='text' value={this.state.currentInfo.name} placeholder='name' onChange={(e) => this.updateName(e)} onBlur={() => this.loginChanged()} />
-            <input type='text' value={this.state.currentInfo.username} placeholder='username' onChange={(e) => this.updateUsername(e)} onBlur={() => this.loginChanged()} />
-            <input type={passwordInputType} value={this.state.currentInfo.password} placeholder='password' onChange={(e) => this.updatePassword(e)} onBlur={() => this.loginChanged()} />
+            <input type='text' value={this.state.currentInfo.name} placeholder='name' onChange={(e) => this.updateName(e)} onBlur={() => this.loginChanged()} onKeyDown={(e) => this.keyDown(e)} />
+            <input type='text' value={this.state.currentInfo.username} placeholder='username' onChange={(e) => this.updateUsername(e)} onBlur={() => this.loginChanged()} onKeyDown={(e) => this.keyDown(e)} />
+            <input type={passwordInputType} value={this.state.currentInfo.password} placeholder='password' onChange={(e) => this.updatePassword(e)} onBlur={() => this.loginChanged()} onKeyDown={(e) => this.keyDown(e)} />
             <input type='button' onClick={() => this.togglePasswordVisibility()} value={visibilityButtonText} />
             <input type='button' onClick={() => this.delete()} value='Delete' />
         </div>;
