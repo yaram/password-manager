@@ -1,4 +1,4 @@
-import React, { Component, ChangeEvent } from 'react';
+import React, { Component, ChangeEvent, FormEvent } from 'react';
 import nacl from 'tweetnacl';
 import scryptsy from 'scryptsy';
 import { Buffer } from 'buffer';
@@ -51,7 +51,9 @@ class App extends Component<{}, {
         });
     }
 
-    submitPassword() {
+    submitPassword(e: FormEvent<HTMLFormElement>) {
+        e.preventDefault();
+
         if(this.state.username.length === 0) {
             this.setState({
                 error: 'Please enter a username'
@@ -166,12 +168,13 @@ class App extends Component<{}, {
                 error = <div id='error'>{this.state.error}</div>;
             }
 
-            content = <>
+            content = <form id='passwordForm' onSubmit={(e) => this.submitPassword(e)}>
                 <input id='username' type='text' placeholder='username' onChange={(e) => this.usernameChanged(e)} />
                 <input id='password' type='password' placeholder='password' onChange={(e) => this.passwordChanged(e)} />
-                <input type='button' value='Continue' onClick={() => this.submitPassword()} />
+                <input type='submit' value='Continue' />
+                
                 {error}
-            </>;
+            </form>;
         } else if(this.state.state === 'logins') {
             const logins = Object.entries(this.state.logins).map(([id, info]) => 
                 <LoginDisplay key={id} info={info} onChange={(info) => this.updateLogin(id, info)} onDelete={() => this.deleteLogin(id)} />

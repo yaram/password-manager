@@ -9,18 +9,24 @@
     align-items: stretch;
 }
 
-#App > input {
-    align-self: center;
-}
-
 #App > * {
     margin: 4px;
 }
 
-#App > #username {
+#App > #passwordForm {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+#App > #passwordForm > input {
+    align-self: center;
+}
+
+#App > #passwordForm > #username {
     width: 250px;
 }
 
-#App > #password {
+#App > #passwordForm > #password {
     width: 250px;
 }
