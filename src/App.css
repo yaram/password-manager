@@ -30,3 +30,9 @@
 #App > #passwordForm > #password {
     width: 250px;
 }
+
+#App > #newLogin {
+    width: 100px;
+    height: 30px;
+    align-self: center;
+}

@@ -182,7 +182,7 @@ class App extends Component<{}, {
 
             content = <>
                 {logins}
-                <input type='button' value='New Login' onClick={() => this.addNewLogin()} />
+                <input type='button' value='New Login' id='newLogin' onClick={() => this.addNewLogin()} />
             </>;
         }
 
