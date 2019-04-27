@@ -169,7 +169,7 @@ class App extends Component<{}, {
             }
 
             content = <form id='passwordForm' onSubmit={(e) => this.submitPassword(e)}>
-                <input id='username' type='text' placeholder='username' onChange={(e) => this.usernameChanged(e)} />
+                <input id='username' type='text' placeholder='username' autoFocus onChange={(e) => this.usernameChanged(e)} />
                 <input id='password' type='password' placeholder='password' onChange={(e) => this.passwordChanged(e)} />
                 <input type='submit' value='Continue' />
                 
