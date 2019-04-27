@@ -31,7 +31,7 @@ class App extends Component<{}, {
     password: string,
     key: Buffer | null,
     feedKeyPair: ec.KeyPair | null,
-    error: string | null,
+    message: string | null,
     logins: { [id: string]: LoginInfo },
     nextLoginID: number
 }> {
@@ -44,7 +44,7 @@ class App extends Component<{}, {
             password: '',
             key: null,
             feedKeyPair: null,
-            error: null,
+            message: null,
             logins: {},
             nextLoginID: 0
         };
@@ -65,9 +65,13 @@ class App extends Component<{}, {
     async submitPassword(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
 
+        this.setState({
+            message: 'Loading...'
+        });
+
         if(this.state.username.length === 0) {
             this.setState({
-                error: 'Please enter a username'
+                message: 'Please enter a username'
             });
 
             return;
@@ -75,15 +79,11 @@ class App extends Component<{}, {
 
         if(this.state.password.length === 0) {
             this.setState({
-                error: 'Please enter a password'
+                message: 'Please enter a password'
             });
 
             return;
         }
-
-        this.setState({
-            error: ''
-        });
 
         const key = scryptsy(
             Buffer.from(this.state.password),
@@ -120,7 +120,7 @@ class App extends Component<{}, {
             const feedUpdateResponse = await fetch(url.resolve(bzzUrl, '/bzz-feed:/') + '?user=' + user + '&topic=' + topic);
 
             if(feedUpdateResponse.ok) {
-                console.log(await feedUpdateResponse.text());
+                persistedDataJSON = await feedUpdateResponse.text();
             }
         } catch(e) {
             
@@ -132,8 +132,8 @@ class App extends Component<{}, {
 
         if(persistedDataJSON !== null){
             const persistedData: {
-                info: string,
-                nonce: string
+                nonce: string,
+                info: string
             } = JSON.parse(persistedDataJSON);
 
             const infoJSON = nacl.secretbox.open(new Uint8Array(Buffer.from(persistedData.info, 'base64').buffer), new Uint8Array(Buffer.from(persistedData.nonce, 'base64').buffer), new Uint8Array(key.buffer));
@@ -143,12 +143,13 @@ class App extends Component<{}, {
 
                 this.setState({
                     state: 'logins',
+                    message: null,
                     logins: info.logins,
                     nextLoginID: info.nextLoginID
                 });
             } else {
                 this.setState({
-                    error: 'Incorrect username or password'
+                    message: 'Incorrect username or password'
                 });
             }
         } else {
@@ -156,7 +157,12 @@ class App extends Component<{}, {
 
             if(result) {
                 this.setState({
-                    state: 'logins'
+                    state: 'logins',
+                    message: null
+                });
+            } else {
+                this.setState({
+                    message: null
                 });
             }
         }
@@ -221,7 +227,7 @@ class App extends Component<{}, {
 
             const topic = '0x' + topicBytes.toString('hex');
 
-            const feedTemplateResponse = await fetch(url.resolve(bzzUrl, '/bzz-feed:/') + '?user=' + user + '&topic' + topic + '&meta=1');
+            const feedTemplateResponse = await fetch(url.resolve(bzzUrl, '/bzz-feed:/') + '?user=' + user + '&topic=' + topic + '&meta=1');
 
             const feedTemplate: {
                 feed: {
@@ -275,9 +281,9 @@ class App extends Component<{}, {
     render() {
         let content;
         if(this.state.state === 'password') {
-            let error;
-            if(this.state.error !== null) {
-                error = <div id='error'>{this.state.error}</div>;
+            let message;
+            if(this.state.message !== null) {
+                message = <div>{this.state.message}</div>;
             }
 
             content = <form id='passwordForm' onSubmit={(e) => this.submitPassword(e)}>
@@ -285,7 +291,7 @@ class App extends Component<{}, {
                 <input id='password' type='password' placeholder='password' onChange={(e) => this.passwordChanged(e)} />
                 <input type='submit' value='Continue' />
                 
-                {error}
+                {message}
             </form>;
         } else if(this.state.state === 'logins') {
             const logins = Object.entries(this.state.logins).map(([id, info]) => 
