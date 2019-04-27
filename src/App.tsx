@@ -128,6 +128,18 @@ class App extends Component<{}, {
 
         if(persistedDataJSON === null) {
             persistedDataJSON = localStorage.getItem('data-' + this.state.username);
+
+            if(persistedDataJSON !== null) {
+                const result = window.confirm('Unable to read logins from Swarm. Do you want to use the local cache instead?');
+
+                if(!result) {
+                    this.setState({
+                        message: null
+                    });
+
+                    return;
+                }
+            }
         }
 
         if(persistedDataJSON !== null){
