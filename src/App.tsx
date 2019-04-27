@@ -18,6 +18,7 @@ interface PersistedInfo {
 
 class App extends Component<{}, {
     state: 'password' | 'logins',
+    username: string,
     password: string,
     key: Buffer | null,
     error: string | null,
@@ -29,12 +30,19 @@ class App extends Component<{}, {
 
         this.state = {
             state: 'password',
+            username: '',
             password: '',
             key: null,
             error: null,
             logins: {},
             nextLoginID: 0
         };
+    }
+
+    usernameChanged(e: ChangeEvent<HTMLInputElement>) {
+        this.setState({
+            username: e.target.value
+        });
     }
 
     passwordChanged(e: ChangeEvent<HTMLInputElement>) {
@@ -44,65 +52,64 @@ class App extends Component<{}, {
     }
 
     submitPassword() {
-        this.setState({
-            error: ''
-        });
+        if(this.state.username.length === 0) {
+            this.setState({
+                error: 'Please enter a username'
+            });
+
+            return;
+        }
 
         if(this.state.password.length === 0) {
             this.setState({
                 error: 'Please enter a password'
             });
-        } else {
-            const persistedSaltText = localStorage.getItem('passwordSalt');
 
-            let salt: Buffer;
-            if(persistedSaltText === null) {
-                salt = Buffer.from(nacl.randomBytes(32));
+            return;
+        }
 
-                localStorage.setItem('passwordSalt', salt.toString('base64'));
-            } else {
-                salt = Buffer.from(persistedSaltText, 'base64');
-            }
+        this.setState({
+            error: ''
+        });
 
-            const key = scryptsy(
-                Buffer.from(this.state.password),
-                salt,
-                2048,
-                8,
-                1,
-                nacl.secretbox.keyLength
-            );
+        const key = scryptsy(
+            Buffer.from(this.state.password),
+            Buffer.from(this.state.username + '@password-manager'),
+            2048,
+            8,
+            1,
+            nacl.secretbox.keyLength
+        );
 
-            const persistedDataJSON = localStorage.getItem('data');
+        const persistedDataJSON = localStorage.getItem('data');
 
-            if(persistedDataJSON !== null) {
-                const persistedData: {
-                    nonce: string,
-                    info: string
-                } = JSON.parse(persistedDataJSON);
+        if(persistedDataJSON !== null) {
+            const persistedData: {
+                nonce: string,
+                info: string
+            } = JSON.parse(persistedDataJSON);
 
-                const infoJSON = nacl.secretbox.open(new Uint8Array(Buffer.from(persistedData.info, 'base64').buffer), new Uint8Array(Buffer.from(persistedData.nonce, 'base64').buffer), new Uint8Array(key.buffer));
+            const infoJSON = nacl.secretbox.open(new Uint8Array(Buffer.from(persistedData.info, 'base64').buffer), new Uint8Array(Buffer.from(persistedData.nonce, 'base64').buffer), new Uint8Array(key.buffer));
 
-                if(infoJSON !== null) {
-                    const info: PersistedInfo = JSON.parse(Buffer.from(infoJSON).toString('utf8'));
+            if(infoJSON !== null) {
+                const info: PersistedInfo = JSON.parse(Buffer.from(infoJSON).toString('utf8'));
 
-                    this.setState({
-                        state: 'logins',
-                        key,
-                        logins: info.logins,
-                        nextLoginID: info.nextLoginID
-                    });
-                } else {
-                    this.setState({
-                        error: 'Incorrect password'
-                    });
-                }
+                this.setState({
+                    state: 'logins',
+                    key,
+                    logins: info.logins,
+                    nextLoginID: info.nextLoginID
+                });
             } else {
                 this.setState({
-                    key,
-                    state: 'logins'
+                    error: 'Incorrect username or password'
                 });
             }
+        } else {
+            this.setState({
+                key,
+                state: 'logins'
+            });
         }
     }
 
@@ -160,6 +167,7 @@ class App extends Component<{}, {
             }
 
             content = <>
+                <input id='username' type='text' placeholder='username' onChange={(e) => this.usernameChanged(e)} />
                 <input id='password' type='password' placeholder='password' onChange={(e) => this.passwordChanged(e)} />
                 <input type='button' value='Continue' onClick={() => this.submitPassword()} />
                 {error}

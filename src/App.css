@@ -17,6 +17,10 @@
     margin: 4px;
 }
 
+#App > #username {
+    width: 250px;
+}
+
 #App > #password {
     width: 250px;
 }
