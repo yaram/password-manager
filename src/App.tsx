@@ -100,23 +100,23 @@ class App extends Component<{}, {
 
         let persistedDataJSON: string | null = null;
 
+        const feedKeyPair = curve.keyFromPrivate(key);
+
+        const feedPublicKey = keccak256.arrayBuffer(feedKeyPair.getPublic().encode().slice(1)).slice(-20);
+
+        this.setState({
+            feedKeyPair
+        });
+
+        const user = '0x' + Buffer.from(feedPublicKey).toString('hex');
+
+        const topicBytes = Buffer.alloc(32);
+
+        topicBytes.write(feedTopic);
+
+        const topic = '0x' + topicBytes.toString('hex');
+
         try {
-            const feedKeyPair = curve.keyFromPrivate(key);
-
-            const feedPublicKey = keccak256.arrayBuffer(feedKeyPair.getPublic().encode().slice(1)).slice(-20);
-
-            this.setState({
-                feedKeyPair
-            });
-
-            const user = '0x' + Buffer.from(feedPublicKey).toString('hex');
-
-            const topicBytes = Buffer.alloc(32);
-
-            topicBytes.write(feedTopic);
-
-            const topic = '0x' + topicBytes.toString('hex');
-
             const feedUpdateResponse = await fetch(url.resolve(bzzUrl, '/bzz-feed:/') + '?user=' + user + '&topic=' + topic);
 
             if(feedUpdateResponse.ok) {
@@ -206,6 +206,10 @@ class App extends Component<{}, {
     }
 
     async persistLogins() {
+        this.setState({
+            message: 'Saving...'
+        });
+
         const info: PersistedInfo = {
             logins: this.state.logins,
             nextLoginID: this.state.nextLoginID
@@ -281,31 +285,40 @@ class App extends Component<{}, {
                 signatureParts.recoveryParam as number
             ]);
 
-            await fetch(url.resolve(bzzUrl, '/bzz-feed:/') + '?topic=' + topic + '&user=' + user + '&level=' + feedTemplate.epoch.level + '&time=' + feedTemplate.epoch.time + '&signature=0x' + signature.toString('hex'), {
+            const feedPostResponse = await fetch(url.resolve(bzzUrl, '/bzz-feed:/') + '?topic=' + topic + '&user=' + user + '&level=' + feedTemplate.epoch.level + '&time=' + feedTemplate.epoch.time + '&signature=0x' + signature.toString('hex'), {
                 method: 'POST',
                 body: persistedDataJSON
             });
+
+            if(feedPostResponse.ok) {
+                this.setState({
+                    message: null
+                });
+
+                return;
+            }
         } catch(e) {
             console.log(e);
         }
 
-        }
+        this.setState({
+            message: 'Unable to save logins to Swarm',
+            persisting: false
+        });
     }
 
     render() {
+        let message;
+        if(this.state.message !== null) {
+            message = <div>{this.state.message}</div>;
+        }
+
         let content;
         if(this.state.state === 'password') {
-            let message;
-            if(this.state.message !== null) {
-                message = <div>{this.state.message}</div>;
-            }
-
             content = <form id='passwordForm' onSubmit={(e) => this.submitPassword(e)}>
                 <input id='username' type='text' placeholder='username' autoFocus onChange={(e) => this.usernameChanged(e)} />
                 <input id='password' type='password' placeholder='password' onChange={(e) => this.passwordChanged(e)} />
                 <input type='submit' value='Continue' />
-                
-                {message}
             </form>;
         } else if(this.state.state === 'logins') {
             const logins = Object.entries(this.state.logins).map(([id, info]) => 
@@ -320,6 +333,7 @@ class App extends Component<{}, {
 
         return <div id='App'>
             {content}
+            {message}
         </div>;
     }
 }
