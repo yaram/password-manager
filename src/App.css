@@ -19,6 +19,10 @@
     align-items: stretch;
 }
 
+#App > #passwordForm > * {
+    margin: 4px;
+}
+
 #App > #passwordForm > input {
     align-self: center;
 }
