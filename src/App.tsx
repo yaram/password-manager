@@ -152,9 +152,13 @@ class App extends Component<{}, {
                 });
             }
         } else {
-            this.setState({
-                state: 'logins'
-            });
+            const result = window.confirm('No saved logins exist with that username and password. Do you want to create a new one?');
+
+            if(result) {
+                this.setState({
+                    state: 'logins'
+                });
+            }
         }
     }
 
