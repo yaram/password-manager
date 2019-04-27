@@ -1,9 +1,18 @@
 import React, { Component, ChangeEvent, FormEvent } from 'react';
 import nacl from 'tweetnacl';
 import scryptsy from 'scryptsy';
+import { keccak256 } from 'js-sha3';
+import { ec } from 'elliptic';
 import { Buffer } from 'buffer';
+import * as url from 'url';
 import './App.css';
 import LoginDisplay from './LoginDisplay';
+
+const bzzUrl = 'https://swarm-gateways.net';
+
+const feedTopic = 'password-manager';
+
+const curve = new ec('secp256k1');
 
 export interface LoginInfo {
     name: string,
@@ -21,6 +30,7 @@ class App extends Component<{}, {
     username: string,
     password: string,
     key: Buffer | null,
+    feedKeyPair: ec.KeyPair | null,
     error: string | null,
     logins: { [id: string]: LoginInfo },
     nextLoginID: number
@@ -33,6 +43,7 @@ class App extends Component<{}, {
             username: '',
             password: '',
             key: null,
+            feedKeyPair: null,
             error: null,
             logins: {},
             nextLoginID: 0
@@ -51,7 +62,7 @@ class App extends Component<{}, {
         });
     }
 
-    submitPassword(e: FormEvent<HTMLFormElement>) {
+    async submitPassword(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
 
         if(this.state.username.length === 0) {
@@ -83,12 +94,46 @@ class App extends Component<{}, {
             nacl.secretbox.keyLength
         );
 
-        const persistedDataJSON = localStorage.getItem('data');
+        this.setState({
+            key
+        });
 
-        if(persistedDataJSON !== null) {
+        let persistedDataJSON: string | null = null;
+
+        try {
+            const feedKeyPair = curve.keyFromPrivate(key);
+
+            const feedPublicKey = keccak256.arrayBuffer(feedKeyPair.getPublic().encode().slice(1)).slice(-20);
+
+            this.setState({
+                feedKeyPair
+            });
+
+            const user = '0x' + Buffer.from(feedPublicKey).toString('hex');
+
+            const topicBytes = Buffer.alloc(32);
+
+            topicBytes.write(feedTopic);
+
+            const topic = '0x' + topicBytes.toString('hex');
+
+            const feedUpdateResponse = await fetch(url.resolve(bzzUrl, '/bzz-feed:/') + '?user=' + user + '&topic=' + topic);
+
+            if(feedUpdateResponse.ok) {
+                console.log(await feedUpdateResponse.text());
+            }
+        } catch(e) {
+            
+        }
+
+        if(persistedDataJSON === null) {
+            persistedDataJSON = localStorage.getItem('data');
+        }
+
+        if(persistedDataJSON !== null){
             const persistedData: {
-                nonce: string,
-                info: string
+                info: string,
+                nonce: string
             } = JSON.parse(persistedDataJSON);
 
             const infoJSON = nacl.secretbox.open(new Uint8Array(Buffer.from(persistedData.info, 'base64').buffer), new Uint8Array(Buffer.from(persistedData.nonce, 'base64').buffer), new Uint8Array(key.buffer));
@@ -98,7 +143,6 @@ class App extends Component<{}, {
 
                 this.setState({
                     state: 'logins',
-                    key,
                     logins: info.logins,
                     nextLoginID: info.nextLoginID
                 });
@@ -109,7 +153,6 @@ class App extends Component<{}, {
             }
         } else {
             this.setState({
-                key,
                 state: 'logins'
             });
         }
@@ -140,7 +183,7 @@ class App extends Component<{}, {
         }, () => this.persistLogins());
     }
 
-    persistLogins() {
+    async persistLogins() {
         const info: PersistedInfo = {
             logins: this.state.logins,
             nextLoginID: this.state.nextLoginID
@@ -157,7 +200,72 @@ class App extends Component<{}, {
             info: infoEncrypted.toString('base64')
         };
 
-        localStorage.setItem('data', JSON.stringify(persistedData));
+        const persistedDataJSON = JSON.stringify(persistedData);
+
+        localStorage.setItem('data', persistedDataJSON);
+
+        try {
+            const feedKeyPair = this.state.feedKeyPair as ec.KeyPair;
+
+            const feedPublicKey = keccak256.arrayBuffer(feedKeyPair.getPublic().encode().slice(1)).slice(-20);
+
+            const user = '0x' + Buffer.from(feedPublicKey).toString('hex');
+
+            const topicBytes = Buffer.alloc(32);
+
+            topicBytes.write(feedTopic);
+
+            const topic = '0x' + topicBytes.toString('hex');
+
+            const feedTemplateResponse = await fetch(url.resolve(bzzUrl, '/bzz-feed:/') + '?user=' + user + '&topic' + topic + '&meta=1');
+
+            const feedTemplate: {
+                feed: {
+                    topic: string,
+                    user: string
+                },
+                epoch: {
+                    level: number,
+                    time: number
+                },
+                protocolVersion: number
+            } = await feedTemplateResponse.json();
+
+            const levelBuffer = Buffer.alloc(1);
+
+            levelBuffer.writeUInt8(feedTemplate.epoch.level, 0);
+
+            const timeBuffer = Buffer.alloc(7);
+
+            timeBuffer.writeUInt32LE(feedTemplate.epoch.time, 0);
+
+            const digest = Buffer.concat([
+                Buffer.from(new Uint8Array([feedTemplate.protocolVersion])),
+                Buffer.alloc(7),
+                topicBytes,
+                Buffer.from(feedPublicKey),
+                timeBuffer,
+                levelBuffer,
+                Buffer.from(persistedDataJSON)
+            ]);
+
+            const digestHash = Buffer.from(keccak256.arrayBuffer(digest));
+
+            const signatureParts = curve.sign(digestHash, feedKeyPair, { pers: undefined, canonical: true });
+
+            const signature =  Buffer.from([
+                ...signatureParts.r.toArray('be', 32),
+                ...signatureParts.s.toArray('be', 32),
+                signatureParts.recoveryParam as number
+            ]);
+
+            await fetch(url.resolve(bzzUrl, '/bzz-feed:/') + '?topic=' + topic + '&user=' + user + '&level=' + feedTemplate.epoch.level + '&time=' + feedTemplate.epoch.time + '&signature=0x' + signature.toString('hex'), {
+                method: 'POST',
+                body: persistedDataJSON
+            });
+        } catch(e) {
+
+        }
     }
 
     render() {
