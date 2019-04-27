@@ -123,7 +123,7 @@ class App extends Component<{}, {
                 persistedDataJSON = await feedUpdateResponse.text();
             }
         } catch(e) {
-            
+            console.log(e);
         }
 
         if(persistedDataJSON === null) {
@@ -226,19 +226,19 @@ class App extends Component<{}, {
 
         localStorage.setItem('data-' + this.state.username, persistedDataJSON);
 
+        const feedKeyPair = this.state.feedKeyPair as ec.KeyPair;
+
+        const feedPublicKey = keccak256.arrayBuffer(feedKeyPair.getPublic().encode().slice(1)).slice(-20);
+
+        const user = '0x' + Buffer.from(feedPublicKey).toString('hex');
+
+        const topicBytes = Buffer.alloc(32);
+
+        topicBytes.write(feedTopic);
+
+        const topic = '0x' + topicBytes.toString('hex');
+
         try {
-            const feedKeyPair = this.state.feedKeyPair as ec.KeyPair;
-
-            const feedPublicKey = keccak256.arrayBuffer(feedKeyPair.getPublic().encode().slice(1)).slice(-20);
-
-            const user = '0x' + Buffer.from(feedPublicKey).toString('hex');
-
-            const topicBytes = Buffer.alloc(32);
-
-            topicBytes.write(feedTopic);
-
-            const topic = '0x' + topicBytes.toString('hex');
-
             const feedTemplateResponse = await fetch(url.resolve(bzzUrl, '/bzz-feed:/') + '?user=' + user + '&topic=' + topic + '&meta=1');
 
             const feedTemplate: {
@@ -286,6 +286,8 @@ class App extends Component<{}, {
                 body: persistedDataJSON
             });
         } catch(e) {
+            console.log(e);
+        }
 
         }
     }
