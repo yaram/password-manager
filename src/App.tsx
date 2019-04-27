@@ -127,7 +127,7 @@ class App extends Component<{}, {
         }
 
         if(persistedDataJSON === null) {
-            persistedDataJSON = localStorage.getItem('data');
+            persistedDataJSON = localStorage.getItem('data-' + this.state.username);
         }
 
         if(persistedDataJSON !== null){
@@ -202,7 +202,7 @@ class App extends Component<{}, {
 
         const persistedDataJSON = JSON.stringify(persistedData);
 
-        localStorage.setItem('data', persistedDataJSON);
+        localStorage.setItem('data-' + this.state.username, persistedDataJSON);
 
         try {
             const feedKeyPair = this.state.feedKeyPair as ec.KeyPair;
