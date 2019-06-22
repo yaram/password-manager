@@ -383,11 +383,18 @@ app<State>({
 
             content = [
                 ...logins,
-                h('input', { type: 'button', value: 'New Login', id: 'newLogin', onClick: addNewLogin})
+                h('input', {
+                    type: 'button',
+                    value: 'New Login',
+                    id: 'newLogin',
+                    onClick: addNewLogin
+                })
             ];
         }
 
-        return h('div', { id: 'app'}, [
+        return h('div', {
+            id: 'app'
+        }, [
             content,
             message
         ]);
