@@ -1,9 +1,0 @@
-.LoginDisplay {
-    display: flex;
-    justify-content: left;
-    flex-wrap: wrap;
-}
-
-.LoginDisplay > * {
-    margin: 4px;
-}

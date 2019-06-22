@@ -1,9 +1,66 @@
-body {
+* {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
 }
 
-#root {
+body {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#app {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 600px;
+    width: 100%;
+    padding: 4px;
+}
+
+#app > * {
+    margin: 4px;
+}
+
+#app > #passwordForm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    margin: 0;
+}
+
+#app > #passwordForm > * {
+    margin: 4px;
+}
+
+#app > #passwordForm > #username {
+    max-width: 250px;
+    width: 100%;
+}
+
+#app > #passwordForm > #password {
+    max-width: 250px;
+    width: 100%;
+}
+
+#app > #newLogin {
+    width: 100px;
+    height: 30px;
+}
+
+#app > .loginDisplay {
+    display: flex;
+    width: 100%;
+}
+
+#app > .loginDisplay > * {
+    margin: 4px;
+    min-width: 0;
+}
+
+#app > .loginDisplay > input[type="button"] {
+    flex-shrink: 0;
 }
