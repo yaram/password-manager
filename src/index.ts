@@ -14,7 +14,7 @@ const feedTopic = 'password-manager';
 
 const curve = new ec('secp256k1');
 
-export interface LoginInfo {
+interface LoginInfo {
     name: string,
     username: string,
     password: string
