@@ -1,5 +1,5 @@
 import { h, app, Dispatch, ActionResult } from 'hyperapp';
-import { Http, HttpProps } from 'hyperapp-fx';
+import { Http } from 'hyperapp-fx';
 import nacl from 'tweetnacl';
 import { keccak256 } from 'js-sha3';
 import { ec } from 'elliptic';
